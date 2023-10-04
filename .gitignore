@@ -1,0 +1,7 @@
+vncorenlp
+test
+src/__pycache__
+multivers_temp
+dev*
+checkpoints
+datasets
