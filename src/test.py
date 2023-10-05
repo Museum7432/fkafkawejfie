@@ -10,9 +10,7 @@ from data import get_dataloader
 
 args = argparse.Namespace(
     checkpoint_path='multivers/checkpoints/fever_sci.ckpt',
-    input_file=os.path.join("DataSets/test.jsonl"), 
-    corpus_file=os.path.join(temp_path, "corpus.jsonl"), 
-    output_file=os.path.join(temp_path, "output.jsonl"), 
+    input_file=os.path.join("datasets/test.jsonl"),
     batch_size=1, 
     device=0, 
     num_workers=4, 

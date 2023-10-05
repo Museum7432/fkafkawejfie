@@ -16,7 +16,7 @@ from transformers import AutoModel, AutoTokenizer
 
 from allennlp_nn_util import batched_index_select
 from allennlp_feedforward import FeedForward
-# from metrics import SciFactMetrics
+from metrics import SciFactMetrics
 
 import util
 
@@ -109,12 +109,14 @@ class MultiVerSModel(pl.LightningModule):
         self.lr = hparams.lr
 
         # Metrics
-        # fold_names = ["train", "valid", "test"]
-        # metrics = {}
-        # for name in fold_names:
-        #     metrics[f"metrics_{name}"] = SciFactMetrics(compute_on_step=False)
+        fold_names = ["train", "valid", "test"]
+        metrics = {}
+        for name in fold_names:
+            # metrics[f"metrics_{name}"] = SciFactMetrics(compute_on_step=False)
+            metrics[f"metrics_{name}"] = SciFactMetrics()
 
-        # self.metrics = nn.ModuleDict(metrics)
+
+        self.metrics = nn.ModuleDict(metrics)
 
     @staticmethod
     def add_model_specific_args(parent_parser):

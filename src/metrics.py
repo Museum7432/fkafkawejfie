@@ -5,7 +5,7 @@ Implement metrics from the SciFact paper.
 
 import torch
 
-from pytorch_lightning.metrics import Metric
+from torchmetrics import Metric
 
 NEI = 1    # Label for NEI class.
 MAX_ABSTRACT_SENTS = 3   # Max number of abstract sentences.
