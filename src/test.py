@@ -3,14 +3,19 @@ import argparse
 import os
 import tqdm
 temp_path = os.path.join("multivers_temp")
+from transformers import AutoModel, AutoTokenizer
+
 
 from model import MultiVerSModel
 from data import get_dataloader
 
+from lightning.pytorch.callbacks import ModelSummary
+
+import torch
 
 args = argparse.Namespace(
-    checkpoint_path='multivers/checkpoints/fever_sci.ckpt',
-    input_file=os.path.join("datasets/test.jsonl"),
+    checkpoint_path='checkpoints/fever.ckpt',
+    input_file=os.path.join("datasets/final.jsonl"),
     batch_size=1, 
     device=0, 
     num_workers=4, 
@@ -24,17 +29,24 @@ args = argparse.Namespace(
     encoder_name="vinai/phobert-base-v2",
     num_labels=3,
     lr=5e-5,
+    label_threshold=None
 )
 
-dataloader = enumerate(get_dataloader(args))
 model = MultiVerSModel(args)
 
+model.load_state_dict(torch.load("checkpoints/fever_state_dict.ckpt", map_location="cpu")["state_dict"])
 
-predictions_all = []
+print(model)
 
+
+
+
+
+dataloader = enumerate(get_dataloader(args))
 for idx,batch in dataloader:
-    print(batch)
+    # print(batch)
     preds_batch = model.predict(batch, args.force_rationale)
-predictions_all.extend(preds_batch)
+    print(preds_batch)
 
-print(predictions_all)
+
+

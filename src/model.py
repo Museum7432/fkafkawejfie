@@ -150,8 +150,9 @@ class MultiVerSModel(pl.LightningModule):
 
         encoder = AutoModel.from_pretrained("vinai/phobert-base-v2")
 
-        for param in encoder.parameters():
-            param.requires_grad = False
+        for name, param in encoder.named_parameters():
+            if name not in ["pooler.dense.weight", "pooler.dense.bias"]:
+                param.requires_grad = False
 
         return encoder
 
