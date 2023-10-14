@@ -40,7 +40,6 @@ def main():
         number_of_sections = 1
 
     for idx,df in tqdm(enumerate(np.array_split(corpus, number_of_sections))):
-        print(idx)
         chunk_output_path = os.path.join(corpus_output_path,"corpus_" + str(idx) + ".jsonl")
 
         if os.path.isfile(chunk_output_path):
