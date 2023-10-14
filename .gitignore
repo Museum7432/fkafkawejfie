@@ -2,6 +2,7 @@ vncorenlp
 test
 src/__pycache__
 multivers_temp
+multivers
 dev*
 checkpoints
 datasets

@@ -1,14 +1,15 @@
 from rank_bm25 import BM25Okapi
 import pandas as pd
 import os
-import py_vncorenlp
-rdrsegmenter = py_vncorenlp.VnCoreNLP(annotators=["wseg"], save_dir=os.path.abspath('vncorenlp'))
+import underthesea
 
-for_trainning = True
-output_path = os.path.join("/home/arch/Projects/college/dsc/datasets")
+output_path = os.path.join("datasets")
 
-data = pd.read_json("/home/arch/Projects/college/dsc/datasets/ise-dsc01-warmup.json", orient="index")
+data = pd.read_json("datasets/ise-dsc01-public-test-offcial.json", orient="index")
+
 data.reset_index(inplace=True)
+
+data = data.sample(100)
 
 def sentence_selection(context_sents, claim):
 
@@ -31,43 +32,17 @@ def sentence_selection(context_sents, claim):
     fin_len = 0
     mask = [0 for _ in range(len(sorted_ids))]
     for i in sorted_ids:
-        if fin_len + len(context_sents[i].split()) + len(query) > 200:
+        if fin_len + len(context_sents[i].split()) + len(query) > 2500:
             break
         
         fin_len += len(context_sents[i].split())
         mask[i] = 1
     
-    selected = []
-    for i in range(len(context_sents)):
-        if mask[i] == 1:
-            selected.append(context_sents[i])
     
-    return selected
-
-def get_evidence(doc_id, context_sents, evidence, verdict):
-    if verdict == "NEI":
-        return None
-    bm25 = BM25Okapi([sent.split(" ") for sent in context_sents])
-
-    evidence_sc = bm25.get_scores(evidence.split(" "))
-
-    evidence_id = evidence_sc.argmax()
-
-    re = {}
-
-    re[doc_id] = [{
-        "sentences":[evidence_id],
-        "label":verdict
-    }]
-    return re
+    return [context_sents[i] for i in range(len(context_sents)) if mask[i] == 1]
 
 
-
-data["claim"] = data["claim"].apply(lambda c: ' '.join(rdrsegmenter.word_segment(c)))
-data["evidence"] = data["evidence"].apply(lambda e: ' '.join(rdrsegmenter.word_segment(e) if e else ""))
-
-data["context"] = data["context"].apply(lambda text: rdrsegmenter.word_segment(text))
-
+data["context"] = data["context"].apply(lambda text: underthesea.sent_tokenize(text))
 
 corpus = pd.DataFrame()
 
@@ -80,10 +55,6 @@ claims = pd.DataFrame()
 claims["id"] = data["index"]
 claims["claim"] = data["claim"]
 claims["doc_ids"] = data["index"].apply(lambda id: [id])
-
-if for_trainning:
-    claims["evidence"] = data.apply(lambda r: get_evidence(r["index"], r["context"], r["evidence"], r["verdict"]), axis=1)
-
 
 corpus.to_json( os.path.join(output_path,"corpus.jsonl"),orient='records', lines=True)
 claims.to_json(os.path.join(output_path, "claims.jsonl"),orient='records', lines=True)
