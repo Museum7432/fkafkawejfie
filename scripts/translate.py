@@ -66,7 +66,7 @@ def main():
 
         df["abstract"] = re
 
-        df.groupby(["doc_id", "title"],sort=False)["abstract"].apply(list).reset_index(name='abstract')
+        df = df.groupby(["doc_id", "title"],sort=False)["abstract"].apply(list).reset_index(name='abstract')
 
         df.to_json(chunk_output_path,orient='records', lines=True)
     
