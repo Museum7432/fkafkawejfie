@@ -29,14 +29,15 @@ def main():
     model = AutoModelForSeq2SeqLM.from_pretrained("vinai/vinai-translate-vi2en")
     model = nn.DataParallel(model)
 
-    number_of_sections = corpus.shape[0] // args.chunk_size
-    if number_of_sections <= 0:
-        number_of_sections = 1
     
     # translate corpus
     corpus = pd.read_json(args.corpus_file,orient="records", lines = True)
 
     corpus_output_path = os.path.join(args.output_dir,"corpus")
+
+    number_of_sections = corpus.shape[0] // args.chunk_size
+    if number_of_sections <= 0:
+        number_of_sections = 1
 
     for idx,df in enumerate(np.array_split(corpus, number_of_sections)):
         print(idx)
@@ -75,6 +76,10 @@ def main():
     claims = pd.read_json(args.claims_file,orient="records", lines = True)
 
     claims_output_path = os.path.join(args.output_dir,"claims")
+
+    number_of_sections = claims.shape[0] // args.chunk_size
+    if number_of_sections <= 0:
+        number_of_sections = 1
 
     for idx,df in enumerate(np.array_split(corpus, number_of_sections)):
         print(idx)

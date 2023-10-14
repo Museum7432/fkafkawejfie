@@ -45,7 +45,7 @@ def main():
     
     parser.add_argument("--input_file", type=str,help="path to input file")
 
-    parser.add_argument("--claim_file", type=str,help="path to output claim file")
+    parser.add_argument("--claims_file", type=str,help="path to output claims file")
 
     parser.add_argument("--corpus_file", type=str,help="path to output corpus file")
 
@@ -56,7 +56,7 @@ def main():
     if not args.input_file:
         parser.error("input file needed!")
 
-    if not args.claim_file:
+    if not args.claims_file:
         parser.error("claim output path need!")
 
     if not args.corpus_file:
@@ -86,7 +86,7 @@ def main():
     claims["claim"] = data["claim"]
     claims["doc_ids"] = data["index"].apply(lambda id: [id])
 
-    claims.to_json(args.claim_file,orient='records', lines=True)
+    claims.to_json(args.claims_file,orient='records', lines=True)
 
 if __name__ == "__main__":
     main()
