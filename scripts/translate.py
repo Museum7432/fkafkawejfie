@@ -18,7 +18,8 @@ def main():
 
     parser.add_argument("--output_dir", type=str,help="save translated chunks to this folder")
 
-    parser.add_argument("--chunk_size", type=int,help="split into chunks to save checkpoint", default=250)
+    parser.add_argument("--chunk_size_corpus", type=int,help="split corpus into chunks to save checkpoint", default=250)
+    parser.add_argument("--chunk_size_claim", type=int,help="split claims into chunks to save checkpoint", default=250)
 
 
     args = parser.parse_args()
@@ -35,7 +36,7 @@ def main():
 
     corpus_output_path = os.path.join(args.output_dir,"corpus")
 
-    number_of_sections = corpus.shape[0] // args.chunk_size
+    number_of_sections = corpus.shape[0] // args.chunk_size_corpus
     if number_of_sections <= 0:
         number_of_sections = 1
 
@@ -76,7 +77,7 @@ def main():
 
     claims_output_path = os.path.join(args.output_dir,"claims")
 
-    number_of_sections = claims.shape[0] // args.chunk_size
+    number_of_sections = claims.shape[0] // args.chunk_size_claim
     if number_of_sections <= 0:
         number_of_sections = 1
 
