@@ -6,6 +6,15 @@ import numpy as np
 import os
 import torch.nn as nn
 
+import shutil
+
+def concatenate_result(input_dir, output_file):
+    with open(output_file,'wb') as final:
+        for file in sorted(os.listdir(input_dir), key=lambda f: int(''.join(filter(str.isdigit, f)))):
+            with open(os.path.join(input_dir, file),'rb') as fd:
+                shutil.copyfileobj(fd, final)
+
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -70,6 +79,10 @@ def main():
 
         df.to_json(chunk_output_path,orient='records', lines=True)
     
+    # concatenate chunks into the final corpus
+
+
+    concatenate_result(corpus_output_path ,os.path.join(args.output_dir,"corpus.jsonl"))
 
     # translate claims
 
@@ -104,6 +117,10 @@ def main():
         df["claim"] = re
 
         df.to_json(chunk_output_path,orient='records', lines=True)
+
+    # concatenate chunks into the final claims
+    concatenate_result(claims_output_path ,os.path.join(args.output_dir,"claims.jsonl"))
+
 
 if __name__ == "__main__":
     main()

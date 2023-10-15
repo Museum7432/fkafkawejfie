@@ -7,3 +7,5 @@ dev*
 checkpoints
 datasets
 .vscode
+outputs
+.python-version
