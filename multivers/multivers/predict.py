@@ -1,8 +1,3 @@
-
-# coppied from https://github.com/dwadden/multivers/blob/main/multivers/predict.py
-import sys
-sys.path.append("multivers/multivers")
-
 from tqdm import tqdm
 import argparse
 from pathlib import Path
@@ -10,8 +5,7 @@ from pathlib import Path
 from model import MultiVerSModel
 from data import get_dataloader
 import util
-import numpy as np
-from train import PeriodicCheckpoint
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -85,7 +79,7 @@ def format_predictions(args, predictions_all):
         formatted_entry = {
             prediction["abstract_id"]: {
                 "label": prediction["predicted_label"],
-                "sentences": [np.argmax(prediction["rationale_probs"])],
+                "sentences": prediction["predicted_rationale"],
             }
         }
         formatted[prediction["claim_id"]].update(formatted_entry)

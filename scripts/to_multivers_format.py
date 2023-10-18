@@ -26,10 +26,10 @@ def sentence_selection(context_sents, claim, n_token_limit=2500):
     fin_len = 0
     mask = [0 for _ in range(len(sorted_ids))]
     for i in sorted_ids:
-        if fin_len + len(context_sents[i].split()) + len(query) > n_token_limit:
+        if fin_len + len(context_sents[i].split(" ")) + len(query) > n_token_limit:
             break
         
-        fin_len += len(context_sents[i].split())
+        fin_len += len(context_sents[i].split(" "))
         mask[i] = 1
     
     
@@ -78,7 +78,7 @@ def main():
     corpus["abstract"] = data.progress_apply(lambda r: sentence_selection(r["context"], r["claim"], n_token_limit=args.n_token_limit), axis=1)
     corpus["title"] = data["index"].apply(lambda d: "")
     
-    corpus.to_json(args.corpus_file,orient='records', lines=True)
+    corpus.to_json(args.corpus_file,orient='records', lines=True, force_ascii=False)
 
     # create claims file
     claims = pd.DataFrame()
@@ -86,7 +86,7 @@ def main():
     claims["claim"] = data["claim"]
     claims["doc_ids"] = data["index"].apply(lambda id: [id])
 
-    claims.to_json(args.claims_file,orient='records', lines=True)
+    claims.to_json(args.claims_file,orient='records', lines=True, force_ascii=False)
 
 if __name__ == "__main__":
     main()
