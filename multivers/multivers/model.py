@@ -47,8 +47,6 @@ def masked_binary_cross_entropy_with_logits(input, target, weight, rationale_mas
     final_loss = (means * weight * rationale_mask).sum()
 
     return final_loss
-
-
 class MultiVerSModel(pl.LightningModule):
     """
     Multi-task SciFact model that encodes claim / abstract pairs using
@@ -149,7 +147,8 @@ class MultiVerSModel(pl.LightningModule):
             starting_encoder_name,
             # gradient_checkpointing=hparams.gradient_checkpointing
             )
-        params_to_train = ['pooler.dense.weight', 'pooler.dense.bias']
+        # params_to_train = ['pooler.dense.weight', 'pooler.dense.bias']
+        params_to_train = []
         for name, param in encoder.named_parameters():
             # Set True only for params in the list 'params_to_train'
             param.requires_grad = True if name in params_to_train else False

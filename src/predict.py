@@ -107,7 +107,5 @@ def main():
     # Save final predictions as json.
     formatted = format_predictions(args, predictions)
     util.write_jsonl(formatted, outname)
-
-
 if __name__ == "__main__":
     main()

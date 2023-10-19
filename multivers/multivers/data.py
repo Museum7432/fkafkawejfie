@@ -14,19 +14,6 @@ import util
 def get_tokenizer():
     "Need to add a few special tokens to the default longformer checkpoint."
     tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-large")
-    # ADDITIONAL_TOKENS = {
-    #     "section_start": "<|sec|>",
-    #     "section_end": "</|sec|>",
-    #     "section_title_start": "<|sec-title|>",
-    #     "section_title_end": "</|sec-title|>",
-    #     "abstract_start": "<|abs|>",
-    #     "abstract_end": "</|abs|>",
-    #     "title_start": "<|title|>",
-    #     "title_end": "</|title|>",
-    #     "sentence_sep": "<|sent|>",
-    #     "paragraph_sep": "<|par|>",
-    # }
-    # tokenizer.add_tokens(list(ADDITIONAL_TOKENS.values()))
     return tokenizer
 
 
