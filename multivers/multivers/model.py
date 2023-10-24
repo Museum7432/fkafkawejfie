@@ -147,11 +147,43 @@ class MultiVerSModel(pl.LightningModule):
             starting_encoder_name,
             # gradient_checkpointing=hparams.gradient_checkpointing
             )
-        # params_to_train = ['pooler.dense.weight', 'pooler.dense.bias']
-        params_to_train = []
+
         for name, param in encoder.named_parameters():
-            # Set True only for params in the list 'params_to_train'
-            param.requires_grad = True if name in params_to_train else False
+            if name.startswith("pooler.dense"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.23"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.22"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.21"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.20"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.19"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.18"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.17"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.16"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.15"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.14"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.13"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.12"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.11"):
+                param.requires_grad = True
+            elif name.startswith("encoder.layer.10"):
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
+
+            
+
 
         return encoder
 
@@ -173,6 +205,7 @@ class MultiVerSModel(pl.LightningModule):
 
         # Predict labels.
         # [n_documents]
+        
 
         label_probs = F.softmax(label_logits, dim=1).detach()
         if self.label_threshold is None:
@@ -188,6 +221,7 @@ class MultiVerSModel(pl.LightningModule):
         # Make rationale predictions
         # Need to invoke `continguous` or `batched_index_select` can fail.
         hidden_states = self.dropout(encoded.last_hidden_state).contiguous()
+        print(hidden_states)
         sentence_states = batched_index_select(hidden_states, abstract_sent_idx)
 
         # Concatenate the CLS token with the sentence states.

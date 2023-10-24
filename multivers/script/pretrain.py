@@ -84,11 +84,13 @@ def main():
         "--eval_batch_size",
         4,
         "--val_check_interval",
-        "0.1",
+        "0.001",
         "--encoder_name",
         "xlm-roberta-large",
         "--monitor",
-        "valid_abstract_rationalized_f1"
+        "valid_abstract_rationalized_f1",
+        # "--starting_checkpoint",
+        # "../checkpoints/latest-12000.ckpt"
     ]
 
     # If training on more than 1 gpu, use DDP accelerator.

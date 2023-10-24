@@ -44,8 +44,11 @@ def get_predictions(args):
 
     # Since we're not running the training loop, gotta put model on GPU.
     model.to(f"cuda:{args.device}")
+    for name, param in model.named_parameters():
+        print(name, param.requires_grad)
     model.eval()
     model.freeze()
+
 
     # Grab model hparams and override using new args, when relevant.
     hparams = model.hparams["hparams"]
@@ -62,6 +65,7 @@ def get_predictions(args):
     for batch in tqdm(dataloader):
         preds_batch = model.predict(batch, args.force_rationale)
         predictions_all.extend(preds_batch)
+    print(predictions_all)
 
     return predictions_all
 
@@ -89,7 +93,6 @@ def format_predictions(args, predictions_all):
             }
         }
         formatted[prediction["claim_id"]].update(formatted_entry)
-
     # Convert to jsonl.
     res = []
     for k, v in formatted.items():
