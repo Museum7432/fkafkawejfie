@@ -10,6 +10,8 @@ def clean_str(s):
     return ''.join(e.lower() if e.isalnum() else " " for e in s)
 
 def distribute_score(score, arr_len, pos):
+    if arr_len == 1:
+        return (arr_len - 1)
     myclip_a = 0
     myclip_b = 1
     my_mean = pos/arr_len
