@@ -27,17 +27,21 @@ def get_evidence_index(sents, evidence):
         )
         return [scores.argmax()]
 
-def slice_context_wrapper(r, tokenizer):
+def slice_context_wrapper(r, tokenizer, max_number_of_slices = None):
     sents = r["sents"]
     claim = r["claim"]
 
     full = [i for i in range(len(sents))]
 
+    if max_number_of_slices == 1:
+        return [full]
+
     slices = context_slicing(
         sents=sents,
         claim=claim,
         tokenizer=tokenizer,
-        silce_size=500
+        silce_size=500,
+        max_number_of_slices= None if not max_number_of_slices else max_number_of_slices-1
     )
 
     if full not in slices:
@@ -119,6 +123,8 @@ def main():
 
     parser.add_argument("--sample_size", type=int,default=0)
 
+    parser.add_argument("--max_number_of_slices", type=int,default=None)
+
     # parser.add_argument("--n_token_limit", type=int,default=2500)
 
     args = parser.parse_args()
@@ -164,7 +170,7 @@ def main():
         data["evidence"] = data.progress_apply(lambda r: get_evidence_index(r["sents"], r["evidence"]), axis=1)
 
 
-    data["context_ids"] = data.progress_apply(lambda r: slice_context_wrapper(r, tokenizer=tokenizer), axis=1)
+    data["context_ids"] = data.progress_apply(lambda r: slice_context_wrapper(r, tokenizer=tokenizer, max_number_of_slices=args.max_number_of_slices), axis=1)
 
     t1 = data.explode("context_ids").reset_index().rename(columns={'index': 'id'})
 

@@ -158,7 +158,7 @@ def slice_context(tokenized_sents_lenght, number_of_contexts, query_score, max_t
         # reduce the score of the selected context
 
         for i in best_context:
-            qscores[i] /= 3.5
+            qscores[i] /= 3
         # print(max_score)
         if best_context not in selected:
             selected.append(best_context)
@@ -166,7 +166,7 @@ def slice_context(tokenized_sents_lenght, number_of_contexts, query_score, max_t
 
 
 def clean_str(s):
-    return ''.join(e.lower() if e.isalnum() else " " for e in s)
+    return ''.join(e.lower() if e.isalnum() else " " for e in no_accent_vietnamese(s))
 
 def distribute_score(score, arr_len, pos):
     if arr_len == 1:
@@ -174,7 +174,7 @@ def distribute_score(score, arr_len, pos):
     myclip_a = 0
     myclip_b = 1
     my_mean = pos/arr_len
-    my_std = 0.7 / arr_len
+    my_std = 0.75 / arr_len
     
     a, b = (myclip_a - my_mean) / my_std, (myclip_b - my_mean) / my_std
 
@@ -210,7 +210,7 @@ def get_top_until_filled(scores, tokenized_sents_lenght, max_token_number):
     
     return [i for i in range(len(scores)) if mask[i] == 1]
 
-def context_slicing(sents, claim, tokenizer, silce_size = 500):
+def context_slicing(sents, claim, tokenizer, silce_size = 500, max_number_of_slices=None):
     
     query_score = get_bm25_scores(sents, claim)
 
@@ -222,18 +222,28 @@ def context_slicing(sents, claim, tokenizer, silce_size = 500):
 
     # abstract_len = model_max_length - claim_tk_length - 1
 
-    slices = slice_context(
-        tokenized_sents_lenght = context_tk_length,
-        number_of_contexts=math.ceil(sum(context_tk_length)*1.25/silce_size), 
-        query_score=normalized_scores, 
-        max_token_number=silce_size
-    )
-
     most_relevance = get_top_until_filled(
         scores = query_score,
         tokenized_sents_lenght=context_tk_length,
         max_token_number=silce_size
     )
+
+    if max_number_of_slices and max_number_of_slices <= 1:
+        return [most_relevance]
+
+    number_of_contexts = math.ceil(sum(context_tk_length)*1.25/silce_size)
+
+    if max_number_of_slices:
+        number_of_contexts = min(max_number_of_slices, number_of_contexts)
+
+    slices = slice_context(
+        tokenized_sents_lenght = context_tk_length,
+        number_of_contexts=number_of_contexts, 
+        query_score=normalized_scores, 
+        max_token_number=silce_size
+    )
+
+    
 
     if most_relevance not in slices:
         slices.append(most_relevance)

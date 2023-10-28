@@ -90,6 +90,7 @@ def format_predictions(args, predictions_all):
             prediction["abstract_id"]: {
                 "label": prediction["predicted_label"],
                 "sentences": [np.argmax(prediction["rationale_probs"])],
+                "full":prediction
             }
         }
         formatted[prediction["claim_id"]].update(formatted_entry)
