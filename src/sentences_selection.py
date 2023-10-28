@@ -24,7 +24,33 @@ def distribute_score(score, arr_len, pos):
     y = truncnorm.pdf(x_range, a, b, loc = my_mean, scale = my_std)
 
     return score*y/sum(y)
+
+def get_bm25_scores(sents, query):
+    query = clean_str(query).split()
+
+    bm25 = BM25Okapi([clean_str(doc).split() for doc in sents])
+
+    query_score = bm25.get_scores(query=query)
+
+    return query_score
+
+def get_top_until_filled(scores, tokenized_sents_lenght, max_token_number):
+    sorted_ids = sorted(range(len(scores)), key=lambda k: scores[k], reverse=True)
+
+    fin_len = 0
+    mask = [0 for _ in range(len(sorted_ids))]
+
+    for i in sorted_ids:
+        if mask[i]:
+            continue
+        if fin_len + tokenized_sents_lenght[i] > max_token_number:
+            break
+        
+        fin_len += tokenized_sents_lenght[i]
+        mask[i] = 1
     
+    return [i for i in range(len(scores)) if mask[i] == 1]
+
 
 def select_sentences(sentences, claim, tokenizer, force_sentences=[]):
     query = clean_str(claim).split()

@@ -485,6 +485,13 @@ class EvidenceInferenceReader(ExternalReader):
 
 ####################
 
+class custom(ExternalReader):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.data_dir = self.data_root / "pretrain/custom"
+        self.name = "custom"
+        self.rationale_mask = 1.0
+
 
 class ConcatDataModule(LightningDataModule):
     def __init__(self, hparams):
@@ -513,6 +520,7 @@ class ConcatDataModule(LightningDataModule):
             "fever": FEVERReader,
             "pubmedqa": PubMedQAReader,
             "evidence_inference": EvidenceInferenceReader,
+            "custom":custom,
         }
 
         # Dataset re-weighting based on confidence.
@@ -523,6 +531,7 @@ class ConcatDataModule(LightningDataModule):
             "FEVER": hparams.fever_weight,
             "PubMedQA": hparams.pubmedqa_weight,
             "EvidenceInference": hparams.evidence_inference_weight,
+            "custom":1
         }
 
         # Datasets with a test set

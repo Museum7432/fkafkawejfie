@@ -84,7 +84,7 @@ def main():
         "--eval_batch_size",
         2,
         "--encoder_name",
-        "longformer-large-science",
+        "markussagen/xlm-roberta-longformer-base-4096",
         "--no_reweight_labels",
     ]
 
