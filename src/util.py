@@ -210,7 +210,7 @@ def get_top_until_filled(scores, tokenized_sents_lenght, max_token_number):
     
     return [i for i in range(len(scores)) if mask[i] == 1]
 
-def context_slicing(sents, claim, tokenizer, silce_size = 500, max_number_of_slices=None):
+def context_slicing(sents, claim, tokenizer, silce_size = 500, max_size=4000, max_number_of_slices=None):
     
     query_score = get_bm25_scores(sents, claim)
 
@@ -228,6 +228,12 @@ def context_slicing(sents, claim, tokenizer, silce_size = 500, max_number_of_sli
         max_token_number=silce_size
     )
 
+    full = most_relevance = get_top_until_filled(
+        scores = query_score,
+        tokenized_sents_lenght=context_tk_length,
+        max_token_number=max_size
+    )
+
     if max_number_of_slices and max_number_of_slices <= 1:
         return [most_relevance]
 
@@ -243,9 +249,8 @@ def context_slicing(sents, claim, tokenizer, silce_size = 500, max_number_of_sli
         max_token_number=silce_size
     )
 
-    
 
     if most_relevance not in slices:
         slices.append(most_relevance)
     
-    return slices
+    return slices, full

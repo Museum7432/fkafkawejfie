@@ -31,18 +31,17 @@ def slice_context_wrapper(r, tokenizer, max_number_of_slices = None):
     sents = r["sents"]
     claim = r["claim"]
 
-    full = [i for i in range(len(sents))]
-
-    if max_number_of_slices == 1:
-        return [full]
-
-    slices = context_slicing(
+    slices, full = context_slicing(
         sents=sents,
         claim=claim,
         tokenizer=tokenizer,
+        max_size=4000,
         silce_size=500,
         max_number_of_slices= None if not max_number_of_slices else max_number_of_slices-1
     )
+
+    if max_number_of_slices == 1:
+        return [full]
 
     if full not in slices:
         slices.append(full)
