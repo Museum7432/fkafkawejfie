@@ -118,7 +118,7 @@ def main():
 
     # Checkpointing.
     checkpoint_callback = callbacks.ModelCheckpoint(
-        monitor=args.monitor, mode="max", save_top_k=1, save_last=True,
+        monitor=args.monitor, mode="max", save_top_k=-1, save_last=True,
         dirpath=checkpoint_dir)
     lr_callback = callbacks.LearningRateMonitor(logging_interval="step")
     gpu_callback = callbacks.GPUStatsMonitor()

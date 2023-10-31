@@ -190,7 +190,17 @@ class MultiVerSModel(pl.LightningModule):
 
         layers_to_train = [
             "pooler.dense",
-            # "encoder.layer.11"
+            "encoder.layer.11",
+            "encoder.layer.10",
+            "encoder.layer.9",
+            "encoder.layer.8",
+            "encoder.layer.7",
+            # "encoder.layer.6",
+            # "encoder.layer.5",
+            # "encoder.layer.4",
+            # "encoder.layer.3",
+            # "encoder.layer.2",
+            # "encoder.layer.1",
         ]
         
         for name, param in encoder.named_parameters():

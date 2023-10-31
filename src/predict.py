@@ -1,7 +1,7 @@
 
 # coppied from https://github.com/dwadden/multivers/blob/main/multivers/predict.py
 import sys
-sys.path.append("multivers/multivers")
+sys.path.append("multivers/multivers_phobert_longformer/multivers")
 
 from tqdm import tqdm
 import argparse
@@ -11,7 +11,6 @@ from model import MultiVerSModel
 from data import get_dataloader
 import util
 import numpy as np
-from train import PeriodicCheckpoint
 
 def get_args():
     parser = argparse.ArgumentParser()

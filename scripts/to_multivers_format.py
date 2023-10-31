@@ -192,6 +192,9 @@ def main():
         re["negative_sample_id"] = 0
 
         re = re.sample(frac=1).reset_index(drop=True)
+
+        # drop entries where the context is too long
+        re = re.drop(re[re["sentences"].isin([[]])].index)
         
         re.to_json(args.output_file, orient='records', lines=True, force_ascii=False)
 
