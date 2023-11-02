@@ -16,6 +16,10 @@ from util import sentences_splitting, remove_noises, context_slicing, get_bm25_s
 
 def split_sents(r, word_segmented=False, rdrsegmenter=None):
         original_sents, processed_sents = sentences_splitting(r["context"], word_segmented=word_segmented, rdrsegmenter=rdrsegmenter)
+        if len(original_sents[-1].split()) <= 2:
+            original_sents = original_sents[:-1]
+            if processed_sents:
+                processed_sents = processed_sents[:-1]
         return pd.Series([original_sents, processed_sents])
 
 def get_evidence_index(sents, evidence):

@@ -488,7 +488,7 @@ class EvidenceInferenceReader(ExternalReader):
 class custom(ExternalReader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.data_dir = self.data_root / "pretrain/custom"
+        self.data_dir = self.data_root / "custom"
         self.name = "custom"
         self.rationale_mask = 1.0
 
