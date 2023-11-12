@@ -228,14 +228,14 @@ def context_slicing(sents, claim, tokenizer, silce_size = 500, max_size=4000, ma
         max_token_number=silce_size
     )
 
-    full = most_relevance = get_top_until_filled(
+    full = get_top_until_filled(
         scores = query_score,
         tokenized_sents_lenght=context_tk_length,
         max_token_number=max_size
     )
 
-    if max_number_of_slices and max_number_of_slices <= 1:
-        return [most_relevance]
+    if not max_number_of_slices or max_number_of_slices <= 1:
+        return [most_relevance], full
 
     number_of_contexts = math.ceil(sum(context_tk_length)*1.25/silce_size)
 

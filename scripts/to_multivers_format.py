@@ -31,7 +31,7 @@ def get_evidence_index(sents, evidence):
         )
         return [scores.argmax()]
 
-def slice_context_wrapper(r, tokenizer, max_number_of_slices = None):
+def slice_context_wrapper(r, tokenizer, max_number_of_slices = None, mask_evidence=False):
     sents = r["sents"]
     claim = r["claim"]
 
@@ -40,15 +40,20 @@ def slice_context_wrapper(r, tokenizer, max_number_of_slices = None):
         claim=claim,
         tokenizer=tokenizer,
         max_size=4000,
-        silce_size=500,
+        silce_size=800,
         max_number_of_slices= None if not max_number_of_slices else max_number_of_slices-1
     )
 
     if max_number_of_slices == 1:
+        if mask_evidence and len(r["evidence"]) != 0 and r["evidence"][0] in full:
+            return [full, [i for i in full if i not in r["evidence"]]]
         return [full]
 
     if full not in slices:
         slices.append(full)
+        
+    if mask_evidence and len(r["evidence"]) != 0 and r["evidence"][0] in full:
+        slices.append([i for i in full if i not in r["evidence"]])
     
     return slices
 
@@ -130,6 +135,8 @@ def main():
 
     # parser.add_argument("--n_token_limit", type=int,default=2500)
 
+    parser.add_argument("--mask_evidence", action='store_true',help="for each context add a new context that has its evidence sentence masked")
+
     args = parser.parse_args()
 
     if not args.input_file:
@@ -173,7 +180,7 @@ def main():
         data["evidence"] = data.progress_apply(lambda r: get_evidence_index(r["sents"], r["evidence"]), axis=1)
 
 
-    data["context_ids"] = data.progress_apply(lambda r: slice_context_wrapper(r, tokenizer=tokenizer, max_number_of_slices=args.max_number_of_slices), axis=1)
+    data["context_ids"] = data.progress_apply(lambda r: slice_context_wrapper(r, tokenizer=tokenizer, max_number_of_slices=args.max_number_of_slices, mask_evidence=args.mask_evidence), axis=1)
 
     t1 = data.explode("context_ids").reset_index().rename(columns={'index': 'id'})
 

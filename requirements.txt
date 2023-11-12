@@ -8,3 +8,5 @@ tqdm
 rank_bm25
 pandas
 scipy
+py_vncorenlp
+underthesea

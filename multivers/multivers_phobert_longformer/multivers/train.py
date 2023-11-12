@@ -100,6 +100,8 @@ def main():
         # Initialize weights from checkpoint and override hyperparams.
         model = MultiVerSModel.load_from_checkpoint(
             args.starting_checkpoint, hparams=args)
+        
+        # model.encoder.save_pretrained("checkpoints/ckpt_last")
     else:
         # Initialize from scratch.
         model = MultiVerSModel(args)
@@ -118,8 +120,8 @@ def main():
 
     # Checkpointing.
     checkpoint_callback = callbacks.ModelCheckpoint(
-        monitor=args.monitor, mode="max", save_top_k=-1, save_last=True,
-        dirpath=checkpoint_dir)
+        monitor=args.monitor, mode="max", save_top_k=20, save_last=True,
+        dirpath=checkpoint_dir, save_weights_only=True)
     lr_callback = callbacks.LearningRateMonitor(logging_interval="step")
     gpu_callback = callbacks.GPUStatsMonitor()
     trainer_callbacks = [checkpoint_callback, lr_callback, gpu_callback]

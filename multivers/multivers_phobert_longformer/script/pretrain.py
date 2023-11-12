@@ -79,15 +79,16 @@ def main():
         "--scheduler_total_epochs",
         epochs,
         "--train_batch_size",
-        1,
-        "--eval_batch_size",
         2,
+        "--eval_batch_size",
+        4,
         "--val_check_interval",
         "0.1",
         "--encoder_name",
         "bluenguyen/longformer-phobert-base-4096",
         "--monitor",
-        "valid_abstract_rationalized_f1"
+        "valid_abstract_rationalized_f1",
+        "--no_shuffle",
     ]
 
     # If training on more than 1 gpu, use DDP accelerator.
