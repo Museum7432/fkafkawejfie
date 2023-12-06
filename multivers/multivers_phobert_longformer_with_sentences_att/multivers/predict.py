@@ -1,8 +1,3 @@
-
-# coppied from https://github.com/dwadden/multivers/blob/main/multivers/predict.py
-import sys
-sys.path.append("multivers/multivers_phobert_longformer/multivers")
-
 from tqdm import tqdm
 import argparse
 from pathlib import Path
@@ -10,7 +5,7 @@ from pathlib import Path
 from model import MultiVerSModel
 from data import get_dataloader
 import util
-import numpy as np
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -43,11 +38,8 @@ def get_predictions(args):
 
     # Since we're not running the training loop, gotta put model on GPU.
     model.to(f"cuda:{args.device}")
-    # for name, param in model.named_parameters():
-    #     print(name, param.requires_grad)
     model.eval()
     model.freeze()
-
 
     # Grab model hparams and override using new args, when relevant.
     hparams = model.hparams["hparams"]
@@ -87,11 +79,11 @@ def format_predictions(args, predictions_all):
         formatted_entry = {
             prediction["abstract_id"]: {
                 "label": prediction["predicted_label"],
-                "sentences": [np.argmax(prediction["rationale_probs"])],
-                "full":prediction
+                "sentences": prediction["predicted_rationale"],
             }
         }
         formatted[prediction["claim_id"]].update(formatted_entry)
+
     # Convert to jsonl.
     res = []
     for k, v in formatted.items():
@@ -109,5 +101,7 @@ def main():
     # Save final predictions as json.
     formatted = format_predictions(args, predictions)
     util.write_jsonl(formatted, outname)
+
+
 if __name__ == "__main__":
     main()
