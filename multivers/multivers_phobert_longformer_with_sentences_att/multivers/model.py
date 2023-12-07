@@ -250,7 +250,7 @@ class MultiVerSModel(pl.LightningModule):
         # attention over sentence_states
         sentence_att = torch.matmul(relavance_scores.unsqueeze(1), sentence_states).squeeze(1)
         
-        # perform label predictions latter
+        # perform label predictions
         label_input = torch.cat([sentence_att, pooled_output], dim=-1)
         # [n_documents x n_labels]
         label_logits = self.label_classifier(label_input)

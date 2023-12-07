@@ -13,6 +13,7 @@ import argparse
 import data_train as dm
 from model import MultiVerSModel
 
+from lightning.pytorch.loggers import WandbLogger
 
 def get_timestamp():
     "Store a timestamp for when training started."
@@ -116,7 +117,10 @@ def main():
         save_dir=save_dir, name=name, version=version)
     csv_logger = pl_loggers.CSVLogger(
         save_dir=save_dir, name=name, version=version)
-    loggers = [tb_logger, csv_logger]
+    
+    wandb_logger = WandbLogger(project="MNIST")
+
+    loggers = [tb_logger, csv_logger, wandb_logger]
 
     # Checkpointing.
     checkpoint_callback = callbacks.ModelCheckpoint(
