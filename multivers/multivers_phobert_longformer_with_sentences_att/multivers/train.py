@@ -13,7 +13,7 @@ import argparse
 import data_train as dm
 from model import MultiVerSModel
 
-from lightning.pytorch.loggers import WandbLogger
+from pytorch_lightning.loggers import WandbLogger
 
 def get_timestamp():
     "Store a timestamp for when training started."
@@ -101,8 +101,6 @@ def main():
         # Initialize weights from checkpoint and override hyperparams.
         model = MultiVerSModel.load_from_checkpoint(
             args.starting_checkpoint, hparams=args)
-        
-        # model.encoder.save_pretrained("checkpoints/ckpt_last")
     else:
         # Initialize from scratch.
         model = MultiVerSModel(args)
@@ -118,7 +116,7 @@ def main():
     csv_logger = pl_loggers.CSVLogger(
         save_dir=save_dir, name=name, version=version)
     
-    wandb_logger = WandbLogger(project="MNIST")
+    wandb_logger = WandbLogger(project="vn-multivers")
 
     loggers = [tb_logger, csv_logger, wandb_logger]
 
