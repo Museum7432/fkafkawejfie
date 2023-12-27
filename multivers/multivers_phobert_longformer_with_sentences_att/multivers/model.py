@@ -173,6 +173,7 @@ class MultiVerSModel(pl.LightningModule):
     @staticmethod
     def _get_encoder(hparams):
         "Start from the Longformer science checkpoint."
+        starting_encoder_name = "bluenguyen/longformer-phobert-base-4096"
 
         def get_phobert_longformer():
             if not os.path.isdir("checkpoints/phobert_4096"):
@@ -182,9 +183,8 @@ class MultiVerSModel(pl.LightningModule):
 
         get_phobert_longformer()
         
-        starting_encoder_name = "bluenguyen/longformer-phobert-base-4096"
-        encoder = RobertaLongModel.from_pretrained(
-            starting_encoder_name,
+        encoder = LongformerModel.from_pretrained(
+            "checkpoints/phobert_4096",
             gradient_checkpointing=hparams.gradient_checkpointing
         )
 
