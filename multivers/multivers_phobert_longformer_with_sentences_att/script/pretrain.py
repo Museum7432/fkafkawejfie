@@ -47,8 +47,8 @@ def main():
     if n_gpus not in [1, 2, 4, 8]:
         raise ValueError("The number of GPU's must be a power of 2.")
 
-    epochs = 6
-    workers_per_gpu = 4  # Number of CPU's per gpu.
+    epochs = 10
+    workers_per_gpu = 8  # Number of CPU's per gpu.
     effective_batch_size = 8  # Desired effective batch size.
     accumulate_grad_batches = effective_batch_size // n_gpus
     num_workers = workers_per_gpu * n_gpus
@@ -79,11 +79,11 @@ def main():
         "--scheduler_total_epochs",
         epochs,
         "--train_batch_size",
-        2,
+        8,
         "--eval_batch_size",
-        4,
+        8,
         "--val_check_interval",
-        "0.01",
+        "0.2",
         "--encoder_name",
         "bluenguyen/longformer-phobert-base-4096",
         "--monitor",

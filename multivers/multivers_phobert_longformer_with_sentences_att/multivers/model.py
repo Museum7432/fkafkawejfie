@@ -78,12 +78,6 @@ class RobertaLongModel(RobertaModel):
             # replace the `modeling_bert.BertSelfAttention` object with `LongformerSelfAttention`
             layer.attention.self = RobertaLongSelfAttention(config, layer_id=i)
 
-def get_phobert_longformer():
-    if not os.path.isdir("checkpoints/phobert_4096"):
-        os.makedirs(os.path.dirname("./checkpoints"), exist_ok=True)
-        model = RobertaLongModel.from_pretrained("bluenguyen/longformer-phobert-base-4096")
-        model.save_pretrained("checkpoints/phobert_4096")
-
 class MultiVerSModel(pl.LightningModule):
     """
     Multi-task SciFact model that encodes claim / abstract pairs using
@@ -179,35 +173,31 @@ class MultiVerSModel(pl.LightningModule):
     @staticmethod
     def _get_encoder(hparams):
         "Start from the Longformer science checkpoint."
-        starting_encoder_name = "bluenguyen/longformer-phobert-base-4096"
-        # encoder = RobertaLongModel.from_pretrained(
-        #     starting_encoder_name,
-        #     # gradient_checkpointing=hparams.gradient_checkpointing
-        # )
+
+        def get_phobert_longformer():
+            if not os.path.isdir("checkpoints/phobert_4096"):
+                os.makedirs(os.path.dirname("./checkpoints"), exist_ok=True)
+                model = RobertaLongModel.from_pretrained("bluenguyen/longformer-phobert-base-4096")
+                model.save_pretrained("checkpoints/phobert_4096")
+
         get_phobert_longformer()
-
-        encoder = LongformerModel.from_pretrained("checkpoints/phobert_4096")
-
-        layers_to_train = [
-            "pooler.dense",
-            "encoder.layer.11",
-            # "encoder.layer.10",
-            # "encoder.layer.9",
-            # "encoder.layer.8",
-            # "encoder.layer.7",
-            # "encoder.layer.6",
-            # "encoder.layer.5",
-            # "encoder.layer.4",
-            # "encoder.layer.3",
-            # "encoder.layer.2",
-            # "encoder.layer.1",
-        ]
         
-        for name, param in encoder.named_parameters():
-            if name.startswith(tuple(layers_to_train)):
-                param.requires_grad = True
-            else:
-                param.requires_grad = False
+        starting_encoder_name = "bluenguyen/longformer-phobert-base-4096"
+        encoder = RobertaLongModel.from_pretrained(
+            starting_encoder_name,
+            gradient_checkpointing=hparams.gradient_checkpointing
+        )
+
+        # layers_to_train = [
+        #     "pooler.dense",
+        #     "encoder.layer"
+        # ]
+        
+        # for name, param in encoder.named_parameters():
+        #     if name.startswith(tuple(layers_to_train)):
+        #         param.requires_grad = True
+        #     else:
+        #         param.requires_grad = False
         return encoder
 
     def forward(self, tokenized, abstract_sent_idx):
@@ -224,7 +214,6 @@ class MultiVerSModel(pl.LightningModule):
         # Make label predictions.
         pooled_output = self.dropout(encoded.pooler_output)
         
-
         # Make rationale predictions
         # Need to invoke `continguous` or `batched_index_select` can fail.
         hidden_states = self.dropout(encoded.last_hidden_state).contiguous()
@@ -236,16 +225,19 @@ class MultiVerSModel(pl.LightningModule):
         rationale_input = torch.cat([pooled_rep, sentence_states], dim=2)
         # Squeeze out dim 2 (the encoder dim).
         # [n_documents x max_n_sentences]
-        rationale_logits = self.rationale_classifier(rationale_input).squeeze(2)
+        rationale_logits_raw = self.rationale_classifier(rationale_input).squeeze(2)
+
+        # testing idea: bringing the probs to near .99 might break sentence_att
+        rationale_logits = 0.6 - F.relu(- rationale_logits_raw)
 
         # Predict rationales.
         # [n_documents x max_n_sentences]
-        rationale_probs = torch.sigmoid(rationale_logits).detach()
+        rationale_probs = torch.sigmoid(rationale_logits.detach())
         predicted_rationales = (rationale_probs >= self.rationale_threshold).to(torch.int64)
 
         # sentences' relavance scores
         # [n_documents x max_n_sentences]
-        relavance_scores = torch.softmax(rationale_logits, dim=-1)
+        relavance_scores = F.softmax(rationale_logits_raw, dim=-1)
 
         # attention over sentence_states
         sentence_att = torch.matmul(relavance_scores.unsqueeze(1), sentence_states).squeeze(1)
@@ -258,7 +250,7 @@ class MultiVerSModel(pl.LightningModule):
         # Predict labels.
         # [n_documents]
 
-        label_probs = F.softmax(label_logits, dim=1).detach()
+        label_probs = F.softmax(label_logits.detach(), dim=1)
         if self.label_threshold is None:
             # If not doing a label threshold, just take the largest.
             predicted_labels = label_logits.argmax(dim=1)
