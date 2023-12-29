@@ -49,6 +49,28 @@ def masked_binary_cross_entropy_with_logits(input, target, weight, rationale_mas
 
     return final_loss
 
+def mask_gradient_for_correct_binary_prediction(input, target, lower_threshold=0.45, upper_threshold=0.55):
+
+    nograd_input = input.detach()
+
+    # lower_threshold
+
+    corr_target = torch.where(target == 0, 1, 0)
+
+    mask = (torch.sigmoid(nograd_input) <= lower_threshold) * corr_target
+
+    input = input*(1-mask) + nograd_input*mask
+
+    # upper_threshold
+
+    corr_target = torch.where(target == 1, 1, 0)
+
+    mask = (torch.sigmoid(nograd_input) >= upper_threshold) * corr_target
+
+    input = input*(1-mask) + nograd_input*mask
+
+    return input
+
 class RobertaLongSelfAttention(LongformerSelfAttention):
     def forward(
         self,
@@ -225,10 +247,7 @@ class MultiVerSModel(pl.LightningModule):
         rationale_input = torch.cat([pooled_rep, sentence_states], dim=2)
         # Squeeze out dim 2 (the encoder dim).
         # [n_documents x max_n_sentences]
-        rationale_logits_raw = self.rationale_classifier(rationale_input).squeeze(2)
-
-        # testing idea: bringing the probs to near .99 might break sentence_att
-        rationale_logits = 0.6 - F.relu(- rationale_logits_raw)
+        rationale_logits = self.rationale_classifier(rationale_input).squeeze(2)
 
         # Predict rationales.
         # [n_documents x max_n_sentences]
@@ -237,7 +256,7 @@ class MultiVerSModel(pl.LightningModule):
 
         # sentences' relavance scores
         # [n_documents x max_n_sentences]
-        relavance_scores = F.softmax(rationale_logits_raw, dim=-1)
+        relavance_scores = F.softmax(rationale_logits, dim=-1)
 
         # attention over sentence_states
         sentence_att = torch.matmul(relavance_scores.unsqueeze(1), sentence_states).squeeze(1)
@@ -278,6 +297,14 @@ class MultiVerSModel(pl.LightningModule):
         # Take weighted average of per-sample losses.
         label_loss = (batch["weight"] * label_loss).sum()
 
+
+        res["rationale_logits"] = mask_gradient_for_correct_binary_prediction(
+            res["rationale_logits"],
+            batch["rationale"],
+            self.rationale_threshold - 0.05,
+            self.rationale_threshold + 0.05,
+        )
+
         # Loss for rationale selection.
         rationale_loss = masked_binary_cross_entropy_with_logits(
             res["rationale_logits"], batch["rationale"], batch["weight"],
@@ -287,9 +314,9 @@ class MultiVerSModel(pl.LightningModule):
         loss = self.label_weight * label_loss + self.rationale_weight * rationale_loss
 
         # Invoke metrics.
-        self.log("label_loss", label_loss)
-        self.log("rationale_loss", rationale_loss)
-        self.log("loss", loss)
+        self.log("label_loss", label_loss.detach())
+        self.log("rationale_loss", rationale_loss.detach())
+        self.log("loss", loss.detach())
 
         self._invoke_metrics(res, batch, "train")
 
