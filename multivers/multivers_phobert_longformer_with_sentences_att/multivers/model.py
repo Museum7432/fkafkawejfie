@@ -49,27 +49,19 @@ def masked_binary_cross_entropy_with_logits(input, target, weight, rationale_mas
 
     return final_loss
 
-def mask_gradient_for_correct_binary_prediction(input, target, lower_threshold=0.45, upper_threshold=0.55):
+def get_mask_for_correct_binary_prediction(pred, target, lower_threshold=-0.1, upper_threshold=0.1):
+    with torch.no_grad():
+        lower_mask = torch.logical_and(
+            pred <= lower_threshold,
+            torch.where(target == 0, 1, 0)
+        )
 
-    nograd_input = input.detach()
+        upper_mask = torch.logical_and(
+            pred >= upper_threshold,
+            torch.where(target == 1, 1, 0)
+        )
 
-    # lower_threshold
-
-    corr_target = torch.where(target == 0, 1, 0)
-
-    mask = (torch.sigmoid(nograd_input) <= lower_threshold) * corr_target
-
-    input = input*(1-mask) + nograd_input*mask
-
-    # upper_threshold
-
-    corr_target = torch.where(target == 1, 1, 0)
-
-    mask = (torch.sigmoid(nograd_input) >= upper_threshold) * corr_target
-
-    input = input*(1-mask) + nograd_input*mask
-
-    return input
+        return torch.logical_or(lower_mask, upper_mask)
 
 class RobertaLongSelfAttention(LongformerSelfAttention):
     def forward(
@@ -297,17 +289,20 @@ class MultiVerSModel(pl.LightningModule):
         # Take weighted average of per-sample losses.
         label_loss = (batch["weight"] * label_loss).sum()
 
-
-        res["rationale_logits"] = mask_gradient_for_correct_binary_prediction(
+        mask = get_mask_for_correct_binary_prediction(
             res["rationale_logits"],
             batch["rationale"],
-            self.rationale_threshold - 0.05,
-            self.rationale_threshold + 0.05,
+            lower_threshold=-0.05, 
+            upper_threshold=0.05
         )
 
+        tmp = res["rationale_logits"].detach() * (~mask)
+
+        masked_rationale_logits = res["rationale_logits"] * mask + tmp
+        
         # Loss for rationale selection.
         rationale_loss = masked_binary_cross_entropy_with_logits(
-            res["rationale_logits"], batch["rationale"], batch["weight"],
+            masked_rationale_logits, batch["rationale"], batch["weight"],
             batch["rationale_mask"])
 
         # Loss is a weighted sum of the two components.
