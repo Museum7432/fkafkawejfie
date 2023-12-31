@@ -181,8 +181,8 @@ class MultiVerSModel(pl.LightningModule):
         get_phobert_longformer()
         
         starting_encoder_name = "bluenguyen/longformer-phobert-base-4096"
-        encoder = RobertaLongModel.from_pretrained(
-            starting_encoder_name,
+        encoder = LongformerModel.from_pretrained(
+            "checkpoints/phobert_4096",
             gradient_checkpointing=hparams.gradient_checkpointing
         )
 
@@ -223,10 +223,7 @@ class MultiVerSModel(pl.LightningModule):
         rationale_input = torch.cat([pooled_rep, sentence_states], dim=2)
         # Squeeze out dim 2 (the encoder dim).
         # [n_documents x max_n_sentences]
-        rationale_logits_raw = self.rationale_classifier(rationale_input).squeeze(2)
-
-        # testing idea: bringing the probs to near .99 might break sentence_att
-        rationale_logits = 0.6 - F.relu(- rationale_logits_raw)
+        rationale_logits = self.rationale_classifier(rationale_input).squeeze(2)
 
         # Predict rationales.
         # [n_documents x max_n_sentences]
@@ -235,8 +232,7 @@ class MultiVerSModel(pl.LightningModule):
 
         # sentences' relavance scores
         # [n_documents x max_n_sentences]
-        relavance_scores = F.softmax(rationale_logits_raw, dim=-1)
-
+        relavance_scores = F.softmax(rationale_logits, dim=-1)
         # attention over sentence_states
         sentence_att = torch.matmul(relavance_scores.unsqueeze(1), sentence_states).squeeze(1)
         
