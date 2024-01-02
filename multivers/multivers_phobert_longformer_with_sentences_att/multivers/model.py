@@ -146,7 +146,7 @@ class MultiVerSModel_learnable_weight(pl.LightningModule):
             activations=activations,
             dropout=dropouts)
 
-        self.sigmoid_to_softmax_W = nn.Parameter(torch.randn(1), requires_grad=True)
+        self.sigmoid_to_softmax_W = nn.Parameter(torch.tensor(25.0), requires_grad=True)
 
         # Learning rates.
         self.lr = hparams.lr
@@ -292,20 +292,20 @@ class MultiVerSModel_learnable_weight(pl.LightningModule):
         # Take weighted average of per-sample losses.
         label_loss = (batch["weight"] * label_loss).sum()
 
-        mask = get_mask_for_correct_binary_prediction(
-            res["rationale_logits"],
-            batch["rationale"],
-            lower_threshold=-0.1, 
-            upper_threshold=0.1
-        )
-
-        tmp = res["rationale_logits"].detach() * (~mask)
-
-        masked_rationale_logits = res["rationale_logits"] * mask + tmp
+        # mask = get_mask_for_correct_binary_prediction(
+        #     res["rationale_logits"],
+        #     batch["rationale"],
+        #     lower_threshold=-0.1,
+        #     upper_threshold=0.1
+        # )
+        #
+        # tmp = res["rationale_logits"].detach() * (~mask)
+        #
+        # masked_rationale_logits = res["rationale_logits"] * mask + tmp
         
         # Loss for rationale selection.
         rationale_loss = masked_binary_cross_entropy_with_logits(
-            masked_rationale_logits, batch["rationale"], batch["weight"],
+            res["rationale_logits"], batch["rationale"], batch["weight"],
             batch["rationale_mask"])
 
         # Loss is a weighted sum of the two components.
@@ -315,6 +315,8 @@ class MultiVerSModel_learnable_weight(pl.LightningModule):
         self.log("label_loss", label_loss.detach())
         self.log("rationale_loss", rationale_loss.detach())
         self.log("loss", loss.detach())
+
+        self.log("sigmoid_to_softmax_W", self.sigmoid_to_softmax_W.detach())
 
         self._invoke_metrics(res, batch, "train")
 
@@ -536,7 +538,7 @@ class MultiVerSModel_seperate_output(pl.LightningModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--encoder_name", type=str, default="bluenguyen/longformer-phobert-base-4096")
         parser.add_argument("--label_weight", type=float, default=1.0)
-        parser.add_argument("--rationale_weight", type=float, default=15.0)
+        parser.add_argument("--rationale_weight", type=float, default=130.0)
         parser.add_argument("--num_labels", type=int, default=3)
         parser.add_argument("--gradient_checkpointing", action="store_true")
         parser.add_argument("--lr", type=float, default=5e-5)
@@ -662,10 +664,23 @@ class MultiVerSModel_seperate_output(pl.LightningModule):
             res["label_logits"], batch["label"], reduction="none")
         # Take weighted average of per-sample losses.
         label_loss = (batch["weight"] * label_loss).sum()
+
+
+        mask = get_mask_for_correct_binary_prediction(
+            res["rationale_logits"],
+            batch["rationale"],
+            lower_threshold=-0.4,
+            upper_threshold=0.4
+        )
+
+        tmp = res["rationale_logits"].detach() * (~mask)
+
+        masked_rationale_logits = res["rationale_logits"] * mask + tmp
+
         
         # Loss for rationale selection.
         rationale_loss = masked_binary_cross_entropy_with_logits(
-            res["rationale_logits"], batch["rationale"], batch["weight"],
+            masked_rationale_logits, batch["rationale"], batch["weight"],
             batch["rationale_mask"])
 
         # Loss is a weighted sum of the two components.
