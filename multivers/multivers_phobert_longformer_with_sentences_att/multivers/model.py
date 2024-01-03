@@ -43,6 +43,9 @@ def masked_binary_cross_entropy_with_logits(input, target, weight, rationale_mas
     # Multiply by `rationale_mask` to ignore sentences where we don't have
     # rationale annotations.
     n_sents = mask.sum(dim=1)
+
+    n_sents = torch.max(n_sents, torch.ones_like(n_sents))
+
     totals = losses.sum(dim=1)
     means = totals / n_sents
     final_loss = (means * weight * rationale_mask).sum()
@@ -538,7 +541,7 @@ class MultiVerSModel_seperate_output(pl.LightningModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--encoder_name", type=str, default="bluenguyen/longformer-phobert-base-4096")
         parser.add_argument("--label_weight", type=float, default=1.0)
-        parser.add_argument("--rationale_weight", type=float, default=130.0)
+        parser.add_argument("--rationale_weight", type=float, default=30.0)
         parser.add_argument("--num_labels", type=int, default=3)
         parser.add_argument("--gradient_checkpointing", action="store_true")
         parser.add_argument("--lr", type=float, default=5e-5)
@@ -669,18 +672,19 @@ class MultiVerSModel_seperate_output(pl.LightningModule):
         mask = get_mask_for_correct_binary_prediction(
             res["rationale_logits"],
             batch["rationale"],
-            lower_threshold=-0.4,
-            upper_threshold=0.4
+            lower_threshold=-1,
+            upper_threshold=1
         )
 
-        tmp = res["rationale_logits"].detach() * (~mask)
+        # tmp = res["rationale_logits"].detach() * (~mask)
+        # masked_rationale_logits = res["rationale_logits"] * mask
 
-        masked_rationale_logits = res["rationale_logits"] * mask + tmp
+        rationale = batch["rationale"]
+        rationale[mask] = -1
 
-        
         # Loss for rationale selection.
         rationale_loss = masked_binary_cross_entropy_with_logits(
-            masked_rationale_logits, batch["rationale"], batch["weight"],
+            res["rationale_logits"], rationale, batch["weight"],
             batch["rationale_mask"])
 
         # Loss is a weighted sum of the two components.

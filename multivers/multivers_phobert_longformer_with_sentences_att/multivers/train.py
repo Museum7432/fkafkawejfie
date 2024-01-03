@@ -11,8 +11,8 @@ from pytorch_lightning.plugins import DDPPlugin
 import argparse
 
 import data_train as dm
-from model import MultiVerSModel_learnable_weight as MultiVerSModel
-# from model import MultiVerSModel_seperate_output as MultiVerSModel
+# from model import MultiVerSModel_learnable_weight as MultiVerSModel
+from model import MultiVerSModel_seperate_output as MultiVerSModel
 
 from pytorch_lightning.loggers import WandbLogger
 
