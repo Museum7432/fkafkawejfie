@@ -131,10 +131,11 @@ class MultiVerSModel(pl.LightningModule):
             hidden_dims=[hidden_size, hparams.num_labels],
             activations=activations,
             dropout=dropouts)
+        # first value is for softmax, second for sigmoid
         self.rationale_classifier = FeedForward(
             input_dim=2 * hidden_size,
             num_layers=2,
-            hidden_dims=[hidden_size, 1],
+            hidden_dims=[hidden_size, 2],
             activations=activations,
             dropout=dropouts)
 
@@ -223,7 +224,16 @@ class MultiVerSModel(pl.LightningModule):
         rationale_input = torch.cat([pooled_rep, sentence_states], dim=2)
         # Squeeze out dim 2 (the encoder dim).
         # [n_documents x max_n_sentences]
-        rationale_logits = self.rationale_classifier(rationale_input).squeeze(2)
+        # rationale_logits = self.rationale_classifier(rationale_input).squeeze(2)
+
+        rationale_logits_raw = self.rationale_classifier(rationale_input)
+
+        # softmax_rationale_logits = rationale_logits_raw[:, :, 0]
+        # sigmoid_rationale_logits = rationale_logits_raw[:, :, 1]
+
+        rationale_logits = rationale_logits_raw[:, :, 1]
+
+        print(rationale_logits_raw)
 
         # Predict rationales.
         # [n_documents x max_n_sentences]
@@ -232,7 +242,8 @@ class MultiVerSModel(pl.LightningModule):
 
         # sentences' relavance scores
         # [n_documents x max_n_sentences]
-        relavance_scores = F.softmax(rationale_logits, dim=-1)
+        relavance_scores = F.softmax(rationale_logits_raw[:, :, 0], dim=-1)
+
         # attention over sentence_states
         sentence_att = torch.matmul(relavance_scores.unsqueeze(1), sentence_states).squeeze(1)
         

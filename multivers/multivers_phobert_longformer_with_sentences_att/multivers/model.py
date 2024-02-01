@@ -52,19 +52,35 @@ def masked_binary_cross_entropy_with_logits(input, target, weight, rationale_mas
 
     return final_loss
 
-def get_mask_for_correct_binary_prediction(pred, target, lower_threshold=-0.1, upper_threshold=0.1):
-    with torch.no_grad():
-        lower_mask = torch.logical_and(
-            pred <= lower_threshold,
-            torch.where(target == 0, 1, 0)
-        )
 
-        upper_mask = torch.logical_and(
-            pred >= upper_threshold,
-            torch.where(target == 1, 1, 0)
-        )
+def thresholded_masked_binary_cross_entropy_with_logits(input, target, weight, rationale_mask):
+    # Mask to indicate which values contribute to loss.
+    mask = torch.where(target > -1, 1, 0)
 
-        return torch.logical_or(lower_mask, upper_mask)
+    # Need to convert target to float, and set -1 values to 0 in order for the
+    # computation to make sense. We'll ignore the -1 values later.
+    float_target = target.clone().to(torch.float)
+    float_target[float_target == -1] = 0
+    losses = F.binary_cross_entropy_with_logits(
+        input, float_target, reduction="none")
+    # Mask out the values that don't matter.
+    losses = losses * mask
+    
+    corr_mask = torch.where(loss < 0.3, 0, 1)
+
+    losses = losses * corr_mask
+
+    # Take "sum of means" over the sentence-level losses for each instance.
+    # Take means so that long documents don't dominate.
+    # Multiply by `rationale_mask` to ignore sentences where we don't have
+    # rationale annotations.
+    n_sents = mask.sum(dim=1)
+
+    totals = losses.sum(dim=1)
+    means = totals / n_sents
+    final_loss = (means * weight * rationale_mask).sum()
+
+    return final_loss
 
 class RobertaLongSelfAttention(LongformerSelfAttention):
     def forward(
@@ -679,7 +695,7 @@ class MultiVerSModel_seperate_output(pl.LightningModule):
         # tmp = res["rationale_logits"].detach() * (~mask)
         # masked_rationale_logits = res["rationale_logits"] * mask
 
-        rationale = batch["rationale"]
+        rationale = batch["rationale"].clone()
         rationale[mask] = -1
 
         # Loss for rationale selection.
